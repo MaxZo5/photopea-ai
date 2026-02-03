@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Photopea Assistant</title>
+    <style>
+        /* تصميم يتماشى مع واجهة فوتوبيا الداكنة */
+        body {
+            background-color: #353535;
+            color: #eeeeee;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 15px;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 95vh;
+        }
+        h3 { margin-top: 0; color: #4fd1c5; text-align: center; }
+        
+        .setup-box {
+            background: #222; padding: 10px; border-radius: 8px; margin-bottom: 10px;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            background: #444;
+            border: 1px solid #555;
+            color: white;
+            padding: 8px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #4fd1c5;
+            border: none;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: 0.3s;
+        }
+        button:hover { background: #38b2ac; }
+        button:disabled { background: #555; cursor: not-allowed; }
+
+        #chat-log {
+            flex-grow: 1;
+            background: #222;
+            border-radius: 8px;
+            padding: 10px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            font-size: 13px;
+            border: 1px solid #444;
+        }
+
+        .msg { margin-bottom: 8px; padding: 5px; border-radius: 4px; }
+        .user { color: #4fd1c5; }
+        .ai { color: #ebf8ff; }
+        .system { color: #aaa; font-style: italic; font-size: 11px; }
+
+        /* لتحميل (Spinner) بسيط */
+        .loading { text-align: center; display: none; }
+    </style>
+</head>
+<body>
+
+    <h3>Photopea AI Agent</h3>
+
+    <!-- قسم الإعدادات (يمكن إخفاؤه لاحقاً) -->
+    <div class="setup-box">
+        <label style="font-size: 12px;">Google Gemini API Key:</label>
+        <input type="password" id="apiKey" placeholder="ضع مفتاح API هنا...">
+    </div>
+
+    <!-- سجل المحادثة -->
+    <div id="chat-log">
+        <div class="system">مرحباً! أنا مساعدك الذكي. اطلب مني أي تعديل على الصورة.</div>
+    </div>
+
+    <!-- منطقة الإدخال -->
+    <textarea id="promptInput" rows="2" placeholder="مثال: اجعل الخلفية سوداء واكتب 'مرحباً' باللون الأحمر"></textarea>
+    <button onclick="handleRequest()" id="sendBtn">نفذ الأمر 🚀</button>
+    <div class="loading" id="loader">جاري التفكير وكتابة الكود... ⏳</div>
+
+    <script>
+        // 1. النظام الذهبي (System Prompt)
+        // هذا هو أهم جزء، هنا نعلم الذكاء الاصطناعي كيف يتصرف
+        const SYSTEM_PROMPT = `
+        You are an expert Adobe Photoshop/Photopea scripter.
+        The user will give you a natural language command.
+        You must output ONLY valid JavaScript (ExtendScript) code compatible with Photopea.
+        
+        RULES:
+        1. Do NOT write markdown (no \`\`\`javascript).
+        2. Do NOT write explanations. Just the code.
+        3. Use 'app.activeDocument' to target the image.
+        4. If creating text, make sure to set the size large enough to be visible (e.g., 50px).
+        5. If the user asks for something impossible via script, use 'alert("Cannot do that");'.
+        `;
+
+        // دالة لإضافة رسائل للشات
+        function log(text, type) {
+            const logDiv = document.getElementById('chat-log');
+            const msg = document.createElement('div');
+            msg.className = 'msg ' + type;
+            msg.innerText = (type === 'user' ? 'أنت: ' : 'AI: ') + text;
+            logDiv.appendChild(msg);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        // 2. دالة الاتصال بـ Photopea (الجسر)
+        function runPhotopeaScript(code) {
+            // تنظيف الكود من أي علامات Markdown قد يضيفها الذكاء الاصطناعي خطأً
+            let cleanCode = code.replace(/```javascript/g, "").replace(/```/g, "").trim();
+            
+            console.log("Executing:", cleanCode); // للمطورين
+            
+            // إرسال الكود للموقع الأم (Photopea)
+            window.parent.postMessage(cleanCode, "*");
+        }
+
+        // 3. دالة الاتصال بالذكاء الاصطناعي (Gemini Example)
+        async function handleRequest() {
+            const input = document.getElementById('promptInput');
+            const apiKey = document.getElementById('apiKey').value;
+            const btn = document.getElementById('sendBtn');
+            const loader = document.getElementById('loader');
+
+            if (!input.value) return;
+            if (!apiKey) { alert("يرجى إدخال API Key أولاً"); return; }
+
+            const userText = input.value;
+            log(userText, 'user');
+            input.value = '';
+            
+            // تفعيل حالة التحميل
+            btn.disabled = true;
+            loader.style.display = 'block';
+
+            try {
+                // إعداد الطلب لـ Google Gemini API
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: SYSTEM_PROMPT + "\n\nUser Request: " + userText
+                            }]
+                        }]
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.error) throw new Error(data.error.message);
+
+                // استخراج الكود من الرد
+                const aiResponse = data.candidates[0].content.parts[0].text;
+                
+                log("تم توليد الكود! جاري التنفيذ...", 'system');
+                
+                // تنفيذ الكود في فوتوبيا
+                runPhotopeaScript(aiResponse);
+
+            } catch (error) {
+                log("حدث خطأ: " + error.message, 'system');
+                alert("Error: " + error.message);
+            } finally {
+                btn.disabled = false;
+                loader.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
