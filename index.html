@@ -2,134 +2,399 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>AI Photopea Assistant</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photopea AI Agent - محسن</title>
     <style>
-        /* تصميم يتماشى مع واجهة فوتوبيا الداكنة */
+        :root {
+            --bg-dark: #181818;
+            --bg-panel: #2b2b2b;
+            --accent: #4fd1c5; /* لون فوتوبيا المميز */
+            --accent-hover: #38b2ac;
+            --text-main: #eeeeee;
+            --text-dim: #aaaaaa;
+            --border: #444;
+            --code-bg: #1e1e1e;
+        }
+
         body {
-            background-color: #353535;
-            color: #eeeeee;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            padding: 15px;
             margin: 0;
+            padding: 20px;
             display: flex;
             flex-direction: column;
             height: 95vh;
-        }
-        h3 { margin-top: 0; color: #4fd1c5; text-align: center; }
-        
-        .setup-box {
-            background: #222; padding: 10px; border-radius: 8px; margin-bottom: 10px;
-        }
-        
-        input, textarea, select {
-            width: 100%;
-            background: #444;
-            border: 1px solid #555;
-            color: white;
-            padding: 8px;
-            margin-bottom: 8px;
-            border-radius: 4px;
             box-sizing: border-box;
         }
 
-        button {
-            width: 100%;
-            padding: 10px;
-            background: #4fd1c5;
-            border: none;
-            color: #000;
-            font-weight: bold;
-            cursor: pointer;
-            border-radius: 4px;
-            transition: 0.3s;
+        h3 {
+            margin: 0 0 15px 0;
+            color: var(--accent);
+            text-align: center;
+            font-weight: 600;
+            letter-spacing: 0.5px;
         }
-        button:hover { background: #38b2ac; }
-        button:disabled { background: #555; cursor: not-allowed; }
+
+        /* حاوية الإعدادات */
+        .settings-panel {
+            background: var(--bg-panel);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .input-group {
+            flex-grow: 1;
+        }
+
+        label {
+            display: block;
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-bottom: 4px;
+        }
+
+        input[type="password"], input[type="text"] {
+            width: 100%;
+            background: #111;
+            border: 1px solid var(--border);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: monospace;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        input:focus { border-color: var(--accent); }
+
+        /* منطقة المحادثة والكود */
+        .main-interface {
+            display: flex;
+            flex-grow: 1;
+            gap: 15px;
+            min-height: 0; /* مهم للفليكس */
+        }
+
+        /* الشات */
+        .chat-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-panel);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
 
         #chat-log {
             flex-grow: 1;
-            background: #222;
-            border-radius: 8px;
-            padding: 10px;
+            padding: 15px;
             overflow-y: auto;
-            margin-bottom: 10px;
-            font-size: 13px;
-            border: 1px solid #444;
+            font-size: 14px;
+            line-height: 1.5;
         }
 
-        .msg { margin-bottom: 8px; padding: 5px; border-radius: 4px; }
-        .user { color: #4fd1c5; }
-        .ai { color: #ebf8ff; }
-        .system { color: #aaa; font-style: italic; font-size: 11px; }
+        .msg { margin-bottom: 12px; padding: 8px 12px; border-radius: 6px; max-width: 85%; }
+        .user { 
+            background-color: #3a3a3a; 
+            color: var(--text-main); 
+            align-self: flex-start; 
+            border-right: 3px solid var(--accent);
+        }
+        .ai { 
+            background-color: #2c4c47; 
+            color: #e6fffa; 
+            align-self: flex-end; 
+            text-align: left; /* للأكواد */
+            direction: ltr; 
+            border-left: 3px solid var(--accent);
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .system { 
+            color: var(--text-dim); 
+            font-size: 12px; 
+            text-align: center; 
+            margin: 10px 0;
+            font-style: italic;
+        }
 
-        /* لتحميل (Spinner) بسيط */
-        .loading { text-align: center; display: none; }
+        .input-area {
+            padding: 10px;
+            background: #222;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+        }
+
+        textarea {
+            flex-grow: 1;
+            background: #111;
+            border: 1px solid var(--border);
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            resize: none;
+            height: 50px;
+            font-family: inherit;
+        }
+        
+        textarea:focus { outline: none; border-color: var(--accent); }
+
+        button {
+            padding: 0 20px;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            white-space: nowrap;
+        }
+        button:hover { background: var(--accent-hover); }
+        button:disabled { background: #555; color: #888; cursor: not-allowed; }
+
+        /* محرر الكود (للمعاينة) */
+        .code-preview-section {
+            width: 40%;
+            background: var(--code-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            padding: 10px;
+            background: #252526;
+            border-bottom: 1px solid var(--border);
+            font-size: 12px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #code-output {
+            flex-grow: 1;
+            padding: 15px;
+            color: #d4d4d4;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            overflow-y: auto;
+            direction: ltr;
+            text-align: left;
+        }
+
+        .run-btn {
+            background: #4caf50;
+            color: white;
+            width: 100%;
+            padding: 12px;
+            border-radius: 0 0 8px 8px;
+            font-weight: bold;
+        }
+        .run-btn:hover { background: #43a047; }
+
+        /* أدوات صغيرة */
+        .copy-btn {
+            background: transparent;
+            color: #aaa;
+            font-size: 11px;
+            padding: 4px;
+            width: auto;
+        }
+        .copy-btn:hover { color: white; background: rgba(255,255,255,0.1); }
+
+        /* Loading Spinner */
+        .spinner {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid rgba(0,0,0,0.3);
+            border-radius: 50%;
+            border-top-color: #000;
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 5px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Toast Notification */
+        #toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 1000;
+            font-size: 14px;
+        }
+        #toast.show { opacity: 1; }
+
+        @media (max-width: 768px) {
+            .main-interface { flex-direction: column; }
+            .code-preview-section { width: 100%; height: 200px; }
+        }
     </style>
 </head>
 <body>
 
-    <h3>Photopea AI Agent</h3>
+    <h3>🤖 Photopea AI Agent</h3>
 
-    <!-- قسم الإعدادات (يمكن إخفاؤه لاحقاً) -->
-    <div class="setup-box">
-        <label style="font-size: 12px;">Google Gemini API Key:</label>
-        <input type="password" id="apiKey" placeholder="ضع مفتاح API هنا...">
+    <!-- إعدادات المفتاح -->
+    <div class="settings-panel">
+        <div class="input-group">
+            <label>Google Gemini API Key</label>
+            <input type="password" id="apiKey" placeholder="ضع مفتاح API هنا (AIza...)" autocomplete="off">
+        </div>
+        <button onclick="saveKey()" style="width: auto; margin-top: 18px;">حفظ</button>
     </div>
 
-    <!-- سجل المحادثة -->
-    <div id="chat-log">
-        <div class="system">مرحباً! أنا مساعدك الذكي. اطلب مني أي تعديل على الصورة.</div>
+    <!-- الواجهة الرئيسية -->
+    <div class="main-interface">
+        
+        <!-- قسم المحادثة -->
+        <div class="chat-section">
+            <div id="chat-log">
+                <div class="system">أهلاً بك! أنا مساعدك الخاص للتحكم في Photopea.</div>
+                <div class="system">أخبرني ماذا تريد أن تفعل (مثال: "أنشئ مستنداً جديداً بأبعاد 800x600 وأضف دائرة زرقاء").</div>
+            </div>
+            <div class="input-area">
+                <textarea id="promptInput" placeholder="اكتب طلبك هنا..."></textarea>
+                <button id="sendBtn" onclick="handleRequest()">إرسال 🚀</button>
+            </div>
+        </div>
+
+        <!-- قسم معاينة الكود -->
+        <div class="code-preview-section">
+            <div class="panel-header">
+                <span>JavaScript Code (Photopea API)</span>
+                <button class="copy-btn" onclick="copyCode()">نسخ الكود</button>
+            </div>
+            <div id="code-output">// سيظهر الكود المولد هنا...</div>
+            <button class="run-btn" onclick="runPhotopeaScript()" id="runBtn" disabled>تنفيذ في Photopea ▶</button>
+        </div>
+
     </div>
 
-    <!-- منطقة الإدخال -->
-    <textarea id="promptInput" rows="2" placeholder="مثال: اجعل الخلفية سوداء واكتب 'مرحباً' باللون الأحمر"></textarea>
-    <button onclick="handleRequest()" id="sendBtn">نفذ الأمر 🚀</button>
-    <div class="loading" id="loader">جاري التفكير وكتابة الكود... ⏳</div>
+    <!-- إشعار منبثق -->
+    <div id="toast">تم نسخ الكود!</div>
 
     <script>
-        // 1. النظام الذهبي (System Prompt)
-        // هذا هو أهم جزء، هنا نعلم الذكاء الاصطناعي كيف يتصرف
-  <script>
+        // ============================================================
+        // 1. إعدادات النظام (System Prompt) - الدماغ المدبر
+        // ============================================================
         const SYSTEM_PROMPT = `
-        You are an expert Photopea scripter. 
-        Output ONLY valid JavaScript code for Photopea. 
-        No markdown, no explanations. 
-        Example: app.activeDocument.artLayers.add();
+        You are an expert in Adobe Photoshop scripting and specifically the Photopea API environment.
+        Your task is to write valid JavaScript code to execute inside Photopea based on the user's request.
+        
+        IMPORTANT RULES:
+        1. Output ONLY the raw JavaScript code. No markdown blocks (like \`\`\`javascript), no explanations, no conversational text.
+        2. Assume a document might or might not be open. If the user asks to create something, start with creating a document.
+        3. Photopea uses the Photoshop DOM model.
+        
+        Common Photopea API Commands (Use these as reference):
+        - Create Document: app.documents.add(800, 600, 72, "MyDocument");
+        - Get Active Layer: var layer = app.activeDocument.activeLayer;
+        - Add Layer: app.activeDocument.artLayers.add();
+        - Layer Type: layer.kind = LayerKind.TEXT; (or LayerKind.NORMAL)
+        - Text Content: layer.textItem.contents = "Hello World";
+        - Text Color: layer.textItem.color.rgb.hexValue = "FF0000";
+        - Select All: app.activeDocument.selection.selectAll();
+        - Fill Color: app.activeDocument.selection.fill(app.foregroundColor); // or new SolidColor()
+        - Create Rectangle: var shape = app.activeDocument.pathItems.rectangle(y, x, width, height); shape.fillPath = ...
+        
+        Example Request: "Make red background"
+        Example Code:
+        var bg = app.activeDocument.artLayers.add();
+        bg.name = "Background";
+        var fillColor = new SolidColor();
+        fillColor.rgb.hexValue = "FF0000";
+        app.activeDocument.selection.selectAll();
+        app.activeDocument.selection.fill(fillColor);
+        app.activeDocument.selection.deselect();
         `;
 
+        // ============================================================
+        // 2. إدارة الواجهة والتفاعل
+        // ============================================================
+        const chatLog = document.getElementById('chat-log');
+        const codeOutput = document.getElementById('code-output');
+        const promptInput = document.getElementById('promptInput');
+        const apiKeyInput = document.getElementById('apiKey');
+        const sendBtn = document.getElementById('sendBtn');
+        const runBtn = document.getElementById('runBtn');
+
+        // استرجاع المفتاح المحفوظ
+        if(localStorage.getItem('photopea_gemini_key')) {
+            apiKeyInput.value = localStorage.getItem('photopea_gemini_key');
+        }
+
+        function saveKey() {
+            localStorage.setItem('photopea_gemini_key', apiKeyInput.value);
+            showToast("تم حفظ مفتاح API");
+        }
+
         function log(text, type) {
-            const logDiv = document.getElementById('chat-log');
             const msg = document.createElement('div');
             msg.className = 'msg ' + type;
-            msg.innerText = (type === 'user' ? 'أنت: ' : 'AI: ') + text;
-            logDiv.appendChild(msg);
-            logDiv.scrollTop = logDiv.scrollHeight;
+            
+            // تنظيف النص قليلاً للعرض
+            let displayText = text;
+            if (type === 'ai') {
+                displayText = "🤖 " + text; 
+            }
+            
+            msg.innerText = displayText;
+            chatLog.appendChild(msg);
+            chatLog.scrollTop = chatLog.scrollHeight;
         }
 
-        function runPhotopeaScript(code) {
-            let cleanCode = code.replace(/```javascript/g, "").replace(/```/g, "").trim();
-            window.parent.postMessage(cleanCode, "*");
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.innerText = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
+        // ============================================================
+        // 3. الاتصال بالذكاء الاصطناعي (Gemini 1.5 Flash)
+        // ============================================================
         async function handleRequest() {
-            const input = document.getElementById('promptInput');
-            const apiKey = document.getElementById('apiKey').value;
-            const btn = document.getElementById('sendBtn');
-            const loader = document.getElementById('loader');
+            const apiKey = apiKeyInput.value.trim();
+            const userText = promptInput.value.trim();
 
-            if (!input.value || !apiKey) {
-                alert("تأكد من كتابة طلبك ووضع API Key");
+            if (!apiKey) {
+                alert("الرجاء إدخال مفتاح Google Gemini API أولاً.");
                 return;
             }
+            if (!userText) return;
 
-            const userText = input.value;
+            // تحديث الواجهة
             log(userText, 'user');
-            input.value = '';
-            btn.disabled = true;
-            loader.style.display = 'block';
+            promptInput.value = '';
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = 'جاري الكتابة... <span class="spinner"></span>';
+            runBtn.disabled = true;
+            codeOutput.innerText = "// جاري التفكير وتوليد الكود...";
 
             try {
-                // ملاحظة: هنا استخدمنا gemini-1.5-flash وهو الموديل المستقر حالياً
+                // استخدام نموذج gemini-1.5-flash المتطور والسريع
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
                 
                 const response = await fetch(url, {
@@ -137,29 +402,81 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{
-                            parts: [{ text: SYSTEM_PROMPT + "\n\nUser: " + userText }]
+                            parts: [{ text: SYSTEM_PROMPT + "\n\nUser Request: " + userText }]
                         }]
                     })
                 });
 
                 const data = await response.json();
-                
+
                 if (data.error) {
-                    throw new Error(data.error.message);
+                    throw new Error("API Error: " + data.error.message);
                 }
 
-                const aiResponse = data.candidates[0].content.parts[0].text;
-                runPhotopeaScript(aiResponse);
-                log("تم تنفيذ الأمر بنجاح ✅", 'system');
+                // استخراج الكود من الرد
+                const rawResponse = data.candidates[0].content.parts[0].text;
+                
+                // تنظيف الكود (إزالة علامات الترميز إذا وجدت رغم الأمر بعدم كتابتها)
+                let cleanCode = rawResponse.replace(/```javascript/g, "").replace(/```/g, "").trim();
+                
+                // إزالة أي نص خارج الكود (أمان إضافي)
+                cleanCode = cleanCode.replace(/^(?!.*(var|function|app\.|document\.)).*/gm, '').trim();
+
+                if (cleanCode.length < 10) {
+                    throw new Error("لم يتمكن الذكاء الاصطناعي من توليد كود صالح.");
+                }
+
+                // عرض النتائج
+                codeOutput.innerText = cleanCode;
+                log("تم توليد الكود بنجاح.", "system");
+                runBtn.disabled = false; // تفعيل زر التشغيل
 
             } catch (error) {
                 log("خطأ: " + error.message, 'system');
+                codeOutput.innerText = "// حدث خطأ:\n" + error.message;
                 console.error(error);
             } finally {
-                btn.disabled = false;
-                loader.style.display = 'none';
+                sendBtn.disabled = false;
+                sendBtn.innerText = 'إرسال 🚀';
             }
         }
+
+        // ============================================================
+        // 4. التنفيذ داخل Photopea
+        // ============================================================
+        function runPhotopeaScript() {
+            const code = codeOutput.innerText;
+            if (!code || code.startsWith("//")) return;
+
+            // الطريقة الصحيحة للتواصل مع Photopea إذا كانت الصفحة مفتوحة داخله (Plugin mode)
+            // أو عبر postMessage إذا كانت نافذة منفصلة
+            
+            log("جاري إرسال الأمر إلى Photopea...", "system");
+
+            // محاولة الإرسال للنافذة الأم (في حال كان الكود يعمل كـ iframe داخل Photopea)
+            try {
+                window.parent.postMessage(code, "*");
+                showToast("تم إرسال الكود إلى Photopea");
+            } catch (e) {
+                console.error(e);
+                showToast("فشل الإرسال التلقائي، انسخ الكود يدوياً");
+            }
+        }
+
+        function copyCode() {
+            const code = codeOutput.innerText;
+            navigator.clipboard.writeText(code).then(() => {
+                showToast("تم نسخ الكود للحافظة");
+            });
+        }
+
+        // تفعيل زر الإرسال عند الضغط على Enter
+        promptInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleRequest();
+            }
+        });
     </script>
 </body>
 </html>
