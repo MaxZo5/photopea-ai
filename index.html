@@ -89,20 +89,14 @@
     <script>
         // 1. النظام الذهبي (System Prompt)
         // هذا هو أهم جزء، هنا نعلم الذكاء الاصطناعي كيف يتصرف
+  <script>
         const SYSTEM_PROMPT = `
-        You are an expert Adobe Photoshop/Photopea scripter.
-        The user will give you a natural language command.
-        You must output ONLY valid JavaScript (ExtendScript) code compatible with Photopea.
-        
-        RULES:
-        1. Do NOT write markdown (no \`\`\`javascript).
-        2. Do NOT write explanations. Just the code.
-        3. Use 'app.activeDocument' to target the image.
-        4. If creating text, make sure to set the size large enough to be visible (e.g., 50px).
-        5. If the user asks for something impossible via script, use 'alert("Cannot do that");'.
+        You are an expert Photopea scripter. 
+        Output ONLY valid JavaScript code for Photopea. 
+        No markdown, no explanations. 
+        Example: app.activeDocument.artLayers.add();
         `;
 
-        // دالة لإضافة رسائل للشات
         function log(text, type) {
             const logDiv = document.getElementById('chat-log');
             const msg = document.createElement('div');
@@ -112,37 +106,30 @@
             logDiv.scrollTop = logDiv.scrollHeight;
         }
 
-        // 2. دالة الاتصال بـ Photopea (الجسر)
         function runPhotopeaScript(code) {
-            // تنظيف الكود من أي علامات Markdown قد يضيفها الذكاء الاصطناعي خطأً
             let cleanCode = code.replace(/```javascript/g, "").replace(/```/g, "").trim();
-            
-            console.log("Executing:", cleanCode); // للمطورين
-            
-            // إرسال الكود للموقع الأم (Photopea)
             window.parent.postMessage(cleanCode, "*");
         }
 
-        // 3. دالة الاتصال بالذكاء الاصطناعي (Gemini Example)
         async function handleRequest() {
             const input = document.getElementById('promptInput');
             const apiKey = document.getElementById('apiKey').value;
             const btn = document.getElementById('sendBtn');
             const loader = document.getElementById('loader');
 
-            if (!input.value) return;
-            if (!apiKey) { alert("يرجى إدخال API Key أولاً"); return; }
+            if (!input.value || !apiKey) {
+                alert("تأكد من كتابة طلبك ووضع API Key");
+                return;
+            }
 
             const userText = input.value;
             log(userText, 'user');
             input.value = '';
-            
-            // تفعيل حالة التحميل
             btn.disabled = true;
             loader.style.display = 'block';
 
             try {
-                // إعداد الطلب لـ Google Gemini API
+                // ملاحظة: هنا استخدمنا gemini-1.5-flash وهو الموديل المستقر حالياً
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
                 
                 const response = await fetch(url, {
@@ -150,28 +137,24 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{
-                            parts: [{
-                                text: SYSTEM_PROMPT + "\n\nUser Request: " + userText
-                            }]
+                            parts: [{ text: SYSTEM_PROMPT + "\n\nUser: " + userText }]
                         }]
                     })
                 });
 
                 const data = await response.json();
                 
-                if (data.error) throw new Error(data.error.message);
+                if (data.error) {
+                    throw new Error(data.error.message);
+                }
 
-                // استخراج الكود من الرد
                 const aiResponse = data.candidates[0].content.parts[0].text;
-                
-                log("تم توليد الكود! جاري التنفيذ...", 'system');
-                
-                // تنفيذ الكود في فوتوبيا
                 runPhotopeaScript(aiResponse);
+                log("تم تنفيذ الأمر بنجاح ✅", 'system');
 
             } catch (error) {
-                log("حدث خطأ: " + error.message, 'system');
-                alert("Error: " + error.message);
+                log("خطأ: " + error.message, 'system');
+                console.error(error);
             } finally {
                 btn.disabled = false;
                 loader.style.display = 'none';
